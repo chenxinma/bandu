@@ -1,0 +1,24 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Secrets
+.env
+
+# Tooling caches
+.ruff_cache/
+
+# Runtime data
+.pydantic-ai-harness/
+.bandu-memory/
+.bandu-logs/
+
+# 本地压测/探针脚本与合成音频
+.probe/

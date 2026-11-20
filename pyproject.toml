@@ -1,0 +1,31 @@
+[project]
+name = "bandu"
+version = "0.1.0"
+description = "伴读 bandu：面向中小学生的语音陪伴型学习助手（S1 DEMO）"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic-ai-slim[openai-realtime]",  # Agent + Realtime WebSocket 传输（OpenAI 协议）
+    "pydantic-ai-harness[coder]",         # 运行时能力库（Memory/Guardrails/SpendLimits 等）
+    "sounddevice",                        # 麦克风/扬声器 I/O
+]
+
+[project.scripts]
+bandu = "bandu:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8",
+    "ruff>=0.9",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
