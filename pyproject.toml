@@ -8,6 +8,8 @@ dependencies = [
     "pydantic-ai-slim[openai-realtime]",  # Agent + Realtime WebSocket 传输（OpenAI 协议）
     "pydantic-ai-harness[coder]",         # 运行时能力库（Memory/Guardrails/SpendLimits 等）
     "sounddevice",                        # 麦克风/扬声器 I/O
+    "requests",                           # 方案 B：整段 ASR 的 HTTP 调用
+    "websockets",                         # 方案 B：流式 TTS（DashScope WS 任务协议）
 ]
 
 [project.scripts]

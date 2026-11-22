@@ -21,10 +21,15 @@ class SessionLog:
         self.turn_id = 0
         self._turn_mark: float | None = None
 
-    def user_turn(self, text: str, intent: Intent, *, rule_triggered: bool) -> None:
-        """记录学生这句话，并以此刻作为本轮首字延迟的起点。"""
+    def user_turn(
+        self, text: str, intent: Intent, *, rule_triggered: bool, since: float | None = None
+    ) -> None:
+        """记录学生这句话，并以此刻作为本轮首字延迟的起点。
+
+        `since` 用于把零点回拨到“学生说完”（方案 B 的 VAD 已知该时刻，而转写晚于它）。
+        """
         self.turn_id += 1
-        self._turn_mark = time.monotonic()
+        self._turn_mark = time.monotonic() if since is None else since
         self._write(event="user", text=text, intent=intent.value, rule_triggered=rule_triggered)
 
     def assistant_turn(self, text: str) -> None:
