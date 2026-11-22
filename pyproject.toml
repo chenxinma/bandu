@@ -5,11 +5,12 @@ description = "伴读 bandu：面向中小学生的语音陪伴型学习助手�
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
-    "pydantic-ai-slim[openai-realtime]",  # Agent + Realtime WebSocket 传输（OpenAI 协议）
-    "pydantic-ai-harness[coder]",         # 运行时能力库（Memory/Guardrails/SpendLimits 等）
-    "sounddevice",                        # 麦克风/扬声器 I/O
-    "requests",                           # 方案 B：整段 ASR 的 HTTP 调用
-    "websockets",                         # 方案 B：流式 TTS（DashScope WS 任务协议）
+    "pydantic-ai-slim[openai]",    # 教学 Agent（OpenAI 兼容协议，指向 Token Plan）
+    "pydantic-ai-harness[coder]",  # 运行时能力库（Memory/Guardrails/SpendLimits 等）
+    "fastapi>=0.165",              # WS 服务后端
+    "uvicorn[standard]>=0.54",     # ASGI 服务器
+    "requests",                    # 整段 ASR 的 HTTP 调用
+    "websockets",                  # 流式 TTS（DashScope WS 任务协议）
 ]
 
 [project.scripts]
@@ -19,11 +20,16 @@ bandu = "bandu:main"
 dev = [
     "pytest>=8",
     "ruff>=0.9",
+    "httpx>=0.28",  # FastAPI TestClient（WS 协议集成测试）
 ]
 
 [tool.ruff]
 line-length = 100
 target-version = "py313"
+
+[[tool.uv.index]]
+url = "https://mirrors.aliyun.com/pypi/simple/"
+default = true
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
