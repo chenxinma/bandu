@@ -26,6 +26,7 @@ const dom = {
 let ws = null;
 let capture = null; // { ctx, stream, node }
 let player = null; // { ctx, nextTime, sources }
+let uploadHoldUntil = 0; // 播完再憋一小段采集：等房间余音/喇叭回声衰减，别让 VAD 收到自家回答的尾巴
 let running = false;
 let phase = "idle";
 let rendered = ""; // 上一次画到屏幕上的相位，避免每帧重写 DOM
@@ -110,6 +111,7 @@ function playChunk(buffer) {
   player.sources.add(source);
   source.onended = () => {
     player.sources.delete(source);
+    if (player.sources.size === 0) uploadHoldUntil = performance.now() + 300;
     renderPhase();
   };
   renderPhase();
@@ -127,6 +129,7 @@ function stopPlayback() {
   }
   player.sources.clear();
   player.nextTime = 0;
+  uploadHoldUntil = performance.now() + 300;
   renderPhase();
 }
 
@@ -157,7 +160,7 @@ async function openMic() {
 
 function onFrame({ pcm, rms }) {
   setLevel(rms);
-  if (!running || phase !== "listening" || playingLocally()) return; // 轮次制：不上行
+  if (!running || phase !== "listening" || playingLocally() || performance.now() < uploadHoldUntil) return; // 轮次制：不上行
   if (ws !== null && ws.readyState === WebSocket.OPEN) ws.send(pcm);
 }
 

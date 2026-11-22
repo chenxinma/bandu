@@ -63,7 +63,10 @@ def transcribe(pcm: bytes) -> str:
         },
         timeout=ASR_TIMEOUT,
     )
-    resp.raise_for_status()
+    if resp.status_code == 400 and resp.text.strip() in ("", "{}"):  # 无有效语音（静音/噪声/残句）
+        return ""  # 服务端对“没有可识别语音”返回 400 空体，按没听清处理，别炸成会话错误
+    if not resp.ok:
+        raise requests.HTTPError(f"ASR {resp.status_code}: {resp.text[:200]}", response=resp)
     return extract_text(resp.json())
 
 
