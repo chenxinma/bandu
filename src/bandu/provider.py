@@ -8,7 +8,7 @@ import os
 
 BASE_URL = "https://token-plan.cn-beijing.maas.aliyuncs.com"
 ASR_URL = f"{BASE_URL}/api/v1/services/aigc/multimodal-generation/generation"
-TTS_WS_URL = f"{BASE_URL}/api-ws/v1/inference/"
+TTS_WS_URL = BASE_URL.replace("https://", "wss://", 1) + "/api-ws/v1/inference/"
 LLM_BASE_URL = f"{BASE_URL}/compatible-mode/v1"
 
 ASR_MODEL = "qwen-audio-3.0-asr-flash"
