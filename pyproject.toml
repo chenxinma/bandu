@@ -11,6 +11,7 @@ dependencies = [
     "uvicorn[standard]>=0.54",     # ASGI 服务器
     "requests",                    # 整段 ASR 的 HTTP 调用
     "websockets",                  # 流式 TTS（DashScope WS 任务协议）
+    "ladybug>=0.22.3",
 ]
 
 [project.scripts]

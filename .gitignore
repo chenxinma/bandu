@@ -22,3 +22,6 @@ wheels/
 
 # 本地压测/探针脚本与合成音频
 .probe/
+
+# 知识图谱构建产物（模式文档 graph/graph-schema.md 入库）
+graph/*.lbdb
