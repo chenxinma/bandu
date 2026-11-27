@@ -1,0 +1,1036 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>语音陪伴助手 · UI Demo</title>
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<style>
+  :root {
+    --bg0: #070B1A;
+    --bg1: #141032;
+    --bg2: #1F1240;
+    --ink: #EAF0FF;
+    --ink-2: #9AA3C7;
+    --ink-3: #5C648A;
+    --accent: #4DE1FF;
+    --accent-2: #7B5CFF;
+    --glass: rgba(255, 255, 255, 0.06);
+    --glass-border: rgba(255, 255, 255, 0.12);
+    --radius: 22px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    height: 100%;
+    font-family: -apple-system, "SF Pro Display", "PingFang SC", "Microsoft YaHei", "Segoe UI", sans-serif;
+    background: #04060F;
+    color: var(--ink);
+    overflow: hidden;
+  }
+
+  /* ---------- 桌面舞台 ---------- */
+  .stage {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    background:
+      radial-gradient(ellipse 60% 40% at 20% 10%, rgba(77, 225, 255, 0.05), transparent 60%),
+      radial-gradient(ellipse 50% 45% at 85% 85%, rgba(123, 92, 255, 0.07), transparent 60%),
+      #04060F;
+    padding: 16px;
+  }
+
+  /* ---------- 9:16 手机框 ---------- */
+  .phone {
+    position: relative;
+    width: min(420px, calc((100vh - 96px) * 9 / 16), calc(100vw - 24px));
+    aspect-ratio: 9 / 16;
+    max-height: calc(100vh - 96px);
+    border-radius: 36px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background:
+      radial-gradient(ellipse 90% 55% at 50% 22%, rgba(60, 40, 130, 0.55), transparent 70%),
+      radial-gradient(ellipse 120% 60% at 50% 105%, rgba(77, 225, 255, 0.10), transparent 55%),
+      linear-gradient(168deg, var(--bg1) 0%, var(--bg0) 48%, var(--bg2) 100%);
+    box-shadow:
+      0 0 0 1px rgba(255, 255, 255, 0.08),
+      0 30px 80px rgba(0, 0, 0, 0.65),
+      0 0 120px rgba(77, 225, 255, 0.06);
+    user-select: none;
+  }
+
+  /* 星点 */
+  .phone::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image:
+      radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,0.35), transparent),
+      radial-gradient(1px 1px at 78% 12%, rgba(255,255,255,0.28), transparent),
+      radial-gradient(1.5px 1.5px at 60% 30%, rgba(255,255,255,0.22), transparent),
+      radial-gradient(1px 1px at 30% 8%, rgba(255,255,255,0.3), transparent),
+      radial-gradient(1px 1px at 88% 40%, rgba(255,255,255,0.18), transparent),
+      radial-gradient(1.5px 1.5px at 8% 48%, rgba(255,255,255,0.16), transparent);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .phone > * { position: relative; z-index: 1; }
+
+  /* ---------- 顶栏 ---------- */
+  .top-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 22px 6px;
+    flex: 0 0 auto;
+  }
+
+  .brand {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+  .brand-name {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+  }
+  .brand-sub {
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    color: var(--ink-3);
+    text-transform: uppercase;
+  }
+
+  .state-pill {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: var(--glass);
+    border: 1px solid var(--glass-border);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    color: var(--ink-2);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: color 0.3s, border-color 0.3s;
+  }
+  .state-pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .phone[data-state="listening"] .state-pill { color: var(--accent); border-color: rgba(77,225,255,0.35); }
+  .phone[data-state="listening"] .dot { background: var(--accent); box-shadow: 0 0 10px var(--accent); animation: blink 1.2s ease-in-out infinite; }
+  .phone[data-state="thinking"] .state-pill { color: #B49AFF; border-color: rgba(180,154,255,0.35); }
+  .phone[data-state="thinking"] .dot { background: #B49AFF; box-shadow: 0 0 10px #B49AFF; animation: blink 0.7s ease-in-out infinite; }
+  .phone[data-state="speaking"] .state-pill { color: #FF7EB6; border-color: rgba(255,126,182,0.4); }
+  .phone[data-state="speaking"] .dot { background: #FF7EB6; box-shadow: 0 0 10px #FF7EB6; animation: blink 0.5s ease-in-out infinite; }
+
+  @keyframes blink { 50% { opacity: 0.35; } }
+
+  /* ---------- 呼吸球区（上部 40%） ---------- */
+  .orb-zone {
+    flex: 0 0 38%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    cursor: pointer;
+  }
+  .orb-canvas {
+    width: 72%;
+    max-width: 260px;
+    aspect-ratio: 1;
+    display: block;
+  }
+  .orb-hint {
+    position: absolute;
+    bottom: 6%;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.14em;
+    color: var(--ink-2);
+    transition: color 0.3s, opacity 0.3s;
+    pointer-events: none;
+  }
+  .phone[data-state="speaking"] .orb-hint { color: #FF7EB6; }
+  .phone[data-state="listening"] .orb-hint { color: var(--accent); }
+
+  /* 打断冲击波 */
+  .ripple {
+    position: absolute;
+    left: 50%; top: 42%;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 126, 182, 0.8);
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .ripple.play { animation: ripple-out 0.55s cubic-bezier(0.2, 0.8, 0.3, 1) forwards; }
+  @keyframes ripple-out {
+    0%   { opacity: 0.9; transform: translate(-50%, -50%) scale(0.6); }
+    100% { opacity: 0;   transform: translate(-50%, -50%) scale(7); }
+  }
+
+  /* ---------- 对话区（中部 30%） ---------- */
+  .chat-zone {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    padding: 4px 18px 8px;
+  }
+  .chat {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 6px 2px 10px;
+    scrollbar-width: none;
+    mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 6px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 14px, #000 calc(100% - 6px), transparent 100%);
+  }
+  .chat::-webkit-scrollbar { display: none; }
+
+  .bubble {
+    max-width: 82%;
+    padding: 10px 14px;
+    font-size: 14px;
+    line-height: 1.55;
+    border-radius: var(--radius);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    animation: bubble-in 0.35s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+    word-break: break-word;
+  }
+  @keyframes bubble-in {
+    from { opacity: 0; transform: translateY(10px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  .bubble.user {
+    align-self: flex-end;
+    background: linear-gradient(135deg, rgba(77, 225, 255, 0.16), rgba(123, 92, 255, 0.14));
+    border: 1px solid rgba(77, 225, 255, 0.28);
+    border-bottom-right-radius: 6px;
+    color: var(--ink);
+  }
+  .bubble.ai {
+    align-self: flex-start;
+    background: rgba(255, 255, 255, 0.07);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom-left-radius: 6px;
+    color: var(--ink);
+  }
+  .bubble.speaking-live {
+    border-color: rgba(255, 126, 182, 0.45);
+    box-shadow: 0 0 24px rgba(255, 126, 182, 0.12);
+  }
+
+  .chat-empty {
+    margin: auto;
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    color: var(--ink-3);
+    opacity: 0.8;
+  }
+
+  /* ---------- 控制区（底部 30%） ---------- */
+  .control-zone {
+    flex: 0 0 30%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+    padding: 6px 24px 26px;
+  }
+
+  .mic-wrap {
+    position: relative;
+    width: 108px;
+    height: 108px;
+    transition: opacity 0.35s, transform 0.35s;
+  }
+  .mic-wrap.hidden-mic {
+    opacity: 0;
+    transform: scale(0.85);
+    pointer-events: none;
+  }
+  .mic-wrap svg { width: 100%; height: 100%; display: block; }
+  .mic-ring-track {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.07);
+    stroke-width: 5;
+  }
+  .mic-ring-level {
+    fill: none;
+    stroke: #3B82F6;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-dasharray: 251.33;
+    stroke-dashoffset: 251.33;
+    transform: rotate(-90deg);
+    transform-origin: 50% 50%;
+    transition: stroke 0.12s linear;
+    filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.5));
+  }
+  .mic-core {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--ink);
+  }
+  .mic-core svg { width: 34px; height: 34px; }
+
+  .status {
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.12em;
+    color: var(--ink-2);
+    min-height: 20px;
+    text-align: center;
+    transition: color 0.3s;
+  }
+  .phone[data-state="listening"] .status { color: var(--accent); }
+  .phone[data-state="thinking"] .status { color: #B49AFF; }
+  .phone[data-state="speaking"] .status { color: #FF7EB6; }
+
+  .dots::after {
+    content: "";
+    display: inline-block;
+    width: 1.4em;
+    text-align: left;
+    animation: dots 1.2s steps(4) infinite;
+  }
+  @keyframes dots {
+    0%   { content: ""; }
+    25%  { content: "·"; }
+    50%  { content: "··"; }
+    75%  { content: "···"; }
+  }
+
+  .stop-btn {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--ink-2);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.18em;
+    padding: 11px 34px;
+    border-radius: 999px;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.15s;
+  }
+  .stop-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--ink);
+    border-color: rgba(255, 255, 255, 0.28);
+  }
+  .stop-btn:active { transform: scale(0.96); }
+  .phone[data-state="speaking"] .stop-btn {
+    border-color: rgba(255, 126, 182, 0.45);
+    color: #FF7EB6;
+  }
+
+  /* ---------- 演示直达条（手机框外） ---------- */
+  .demo-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: min(420px, calc(100vw - 24px));
+  }
+  .demo-bar .label {
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: #4A5170;
+    margin-right: 2px;
+  }
+  .demo-bar button {
+    appearance: none;
+    font: inherit;
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    color: #8B93B0;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .demo-bar button:hover {
+    border-color: rgba(77, 225, 255, 0.4);
+    color: var(--accent);
+  }
+  .demo-bar button.active {
+    background: rgba(77, 225, 255, 0.12);
+    border-color: rgba(77, 225, 255, 0.5);
+    color: var(--accent);
+  }
+  .demo-note {
+    width: 100%;
+    text-align: center;
+    font-size: 10.5px;
+    letter-spacing: 0.04em;
+    color: #3D4460;
+  }
+
+  @media (max-width: 480px) {
+    .stage { padding: 0; gap: 0; justify-content: center; }
+    .phone {
+      width: 100vw;
+      height: 100vh;
+      max-height: none;
+      aspect-ratio: auto;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .demo-bar { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+
+  <div class="phone" id="phone" data-state="idle">
+    <!-- 顶栏 -->
+    <header class="top-bar">
+      <div class="brand">
+        <span class="brand-name">伴读</span>
+        <span class="brand-sub">Voice Companion</span>
+      </div>
+      <div class="state-pill"><span class="dot"></span><span id="stateLabel">待机</span></div>
+    </header>
+
+    <!-- 呼吸球 -->
+    <section class="orb-zone" id="orbZone">
+      <canvas class="orb-canvas" id="orbCanvas" width="520" height="520"></canvas>
+      <div class="orb-hint" id="orbHint">点击开始对话</div>
+      <div class="ripple" id="ripple"></div>
+    </section>
+
+    <!-- 对话区 -->
+    <section class="chat-zone">
+      <div class="chat" id="chat">
+        <div class="chat-empty" id="chatEmpty">对话会显示在这里</div>
+      </div>
+    </section>
+
+    <!-- 控制区 -->
+    <section class="control-zone">
+      <div class="mic-wrap hidden-mic" id="micWrap">
+        <svg viewBox="0 0 96 96" aria-hidden="true">
+          <circle class="mic-ring-track" cx="48" cy="48" r="40"/>
+          <circle class="mic-ring-level" id="micLevel" cx="48" cy="48" r="40"/>
+        </svg>
+        <div class="mic-core">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="2.5" width="6" height="11" rx="3"/>
+            <path d="M5.5 11a6.5 6.5 0 0 0 13 0"/>
+            <path d="M12 17.5V21"/>
+          </svg>
+        </div>
+      </div>
+      <div class="status" id="status">点击开始对话</div>
+      <button class="stop-btn" id="stopBtn" type="button">停止</button>
+    </section>
+  </div>
+
+  <!-- 演示控制 -->
+  <div class="demo-bar">
+    <span class="label">状态直达</span>
+    <button type="button" data-jump="idle" class="active">待机</button>
+    <button type="button" data-jump="listening">聆听</button>
+    <button type="button" data-jump="thinking">思考</button>
+    <button type="button" data-jump="speaking">播放</button>
+    <div class="demo-note">聆听时若授权麦克风则使用真实音量，否则模拟 RMS · 播放中点击手机任意处可打断</div>
+  </div>
+
+</div>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ================================================================
+   *  状态机
+   * ================================================================ */
+  const State = { IDLE: "idle", LISTENING: "listening", THINKING: "thinking", SPEAKING: "speaking" };
+  const LABELS = {
+    idle: "待机",
+    listening: "聆听",
+    thinking: "思考",
+    speaking: "播放",
+  };
+  const HINTS = {
+    idle: "点击开始对话",
+    listening: "正在聆听...",
+    thinking: "思考中",
+    speaking: "点击任意处打断",
+  };
+  const STATUSES = {
+    idle: "点击开始对话",
+    listening: "正在聆听...",
+    thinking: "思考中",
+    speaking: "点击任意处打断",
+  };
+
+  const phone = document.getElementById("phone");
+  const stateLabel = document.getElementById("stateLabel");
+  const orbHint = document.getElementById("orbHint");
+  const statusEl = document.getElementById("status");
+  const micWrap = document.getElementById("micWrap");
+  const micLevelEl = document.getElementById("micLevel");
+  const chat = document.getElementById("chat");
+  const chatEmpty = document.getElementById("chatEmpty");
+  const ripple = document.getElementById("ripple");
+  const stopBtn = document.getElementById("stopBtn");
+  const orbZone = document.getElementById("orbZone");
+  const jumpBtns = document.querySelectorAll(".demo-bar [data-jump]");
+
+  let state = State.IDLE;
+  let stateSince = performance.now();
+  let timers = [];
+
+  /* 对话脚本（演示用） */
+  const SCRIPT = [
+    { who: "user", text: "今天有点累，陪我聊会儿吧。" },
+    { who: "ai",   text: "我在呢。忙了一天辛苦了——是手头的事没做完，还是单纯没休息好？" },
+    { who: "user", text: "作业写不进去，一走神就停不下来。" },
+    { who: "ai",   text: "那我们先把注意力收回来：只写十五分钟，我在这儿陪你。写完告诉我一声，好吗？" },
+  ];
+  let scriptIndex = 0;
+
+  function clearTimers() {
+    timers.forEach(clearTimeout);
+    timers = [];
+  }
+  function later(fn, ms) {
+    const id = setTimeout(fn, ms);
+    timers.push(id);
+    return id;
+  }
+
+  function setState(next, opts = {}) {
+    if (state === next && !opts.force) return;
+    const prev = state;
+    state = next;
+    stateSince = performance.now();
+    phone.dataset.state = next;
+    stateLabel.textContent = LABELS[next];
+
+    const hint = HINTS[next];
+    orbHint.textContent = hint;
+    statusEl.textContent = hint;
+    statusEl.classList.toggle("dots", next === State.THINKING);
+
+    const showMic = next === State.LISTENING || next === State.IDLE;
+    micWrap.classList.remove("hidden-mic");
+    if (!showMic) {
+      // 思考/播放时隐藏
+      micWrap.classList.add("hidden-mic");
+    }
+
+    jumpBtns.forEach(b => b.classList.toggle("active", b.dataset.jump === next));
+
+    clearTimers();
+
+    if (next === State.LISTENING) {
+      ensureAudio();
+      startListeningFlow();
+    } else if (next === State.THINKING) {
+      startThinkingFlow();
+    } else if (next === State.SPEAKING) {
+      startSpeakingFlow();
+    } else if (next === State.IDLE) {
+      clearSpeakingHighlight();
+      if (scriptIndex >= SCRIPT.length) scriptIndex = 0;
+    }
+
+    if (prev === State.SPEAKING && next === State.LISTENING && opts.interrupted) {
+      playRipple();
+      statusEl.textContent = "已打断 · 正在聆听...";
+      later(() => {
+        if (state === State.LISTENING) statusEl.textContent = STATUSES.listening;
+      }, 900);
+    }
+  }
+
+  /* ---------- 各状态流程 ---------- */
+  function startListeningFlow() {
+    // 模拟 ASR：聆听一段时间后吐出用户气泡
+    const utter = SCRIPT[scriptIndex] && SCRIPT[scriptIndex].who === "user"
+      ? SCRIPT[scriptIndex]
+      : { who: "user", text: "（听到了什么……）" };
+    const duration = 2200 + utter.text.length * 90;
+
+    later(() => {
+      if (state !== State.LISTENING) return;
+      if (SCRIPT[scriptIndex] && SCRIPT[scriptIndex].who === "user") {
+        appendBubble("user", SCRIPT[scriptIndex].text);
+        scriptIndex++;
+      }
+      setState(State.THINKING);
+    }, duration);
+  }
+
+  function startThinkingFlow() {
+    later(() => {
+      if (state !== State.THINKING) return;
+      setState(State.SPEAKING);
+    }, 1300);
+  }
+
+  function startSpeakingFlow() {
+    let utter;
+    if (SCRIPT[scriptIndex] && SCRIPT[scriptIndex].who === "ai") {
+      utter = SCRIPT[scriptIndex];
+      scriptIndex++;
+    } else {
+      utter = { who: "ai", text: "嗯，我在听。" };
+    }
+
+    clearSpeakingHighlight();
+    const el = appendBubble("ai", utter.text);
+    el.classList.add("speaking-live");
+    speakingBubble = el;
+
+    const duration = 1400 + utter.text.length * 110;
+    later(() => {
+      if (state !== State.SPEAKING) return;
+      clearSpeakingHighlight();
+      // 还有下一句用户话 → 回到聆听；否则结束回待机
+      if (scriptIndex < SCRIPT.length) {
+        setState(State.LISTENING);
+      } else {
+        setState(State.IDLE);
+        statusEl.textContent = "对话结束 · 点击继续";
+        later(() => {
+          if (state === State.IDLE) statusEl.textContent = STATUSES.idle;
+        }, 2000);
+      }
+    }, duration);
+  }
+
+  let speakingBubble = null;
+  function clearSpeakingHighlight() {
+    if (speakingBubble) {
+      speakingBubble.classList.remove("speaking-live");
+      speakingBubble = null;
+    }
+  }
+
+  function appendBubble(who, text) {
+    if (chatEmpty && chatEmpty.parentNode) chatEmpty.remove();
+    const div = document.createElement("div");
+    div.className = "bubble " + who;
+    div.textContent = text;
+    chat.appendChild(div);
+    chat.scrollTo({ top: chat.scrollHeight, behavior: "smooth" });
+    return div;
+  }
+
+  function playRipple() {
+    ripple.classList.remove("play");
+    void ripple.offsetWidth;
+    ripple.classList.add("play");
+  }
+
+  /* ---------- 交互 ---------- */
+  function primaryAction() {
+    resumeAudio();
+    if (state === State.IDLE) {
+      setState(State.LISTENING);
+    } else if (state === State.SPEAKING) {
+      setState(State.LISTENING, { interrupted: true });
+    }
+  }
+
+  orbZone.addEventListener("click", primaryAction);
+  chat.addEventListener("click", () => {
+    if (state === State.SPEAKING) setState(State.LISTENING, { interrupted: true });
+    else if (state === State.IDLE) primaryAction();
+  });
+
+  stopBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    resumeAudio();
+    scriptIndex = 0;
+    setState(State.IDLE, { force: true });
+  });
+
+  jumpBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.jump;
+      if (target === State.LISTENING) {
+        setState(State.LISTENING, { force: true });
+      } else if (target === State.THINKING) {
+        setState(State.THINKING, { force: true });
+      } else if (target === State.SPEAKING) {
+        setState(State.SPEAKING, { force: true });
+      } else {
+        scriptIndex = 0;
+        setState(State.IDLE, { force: true });
+      }
+    });
+  });
+
+  /* ================================================================
+   *  音频：真实麦克风（可选） + 合成分析数据
+   * ================================================================ */
+  let audioCtx = null;
+  let micAnalyser = null;
+  let micFreq = null;   // 预分配
+  let micTime = null;   // 预分配
+  let micStream = null;
+  let micAvailable = false;
+
+  async function ensureAudio() {
+    try {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if (!AC) return;
+        audioCtx = new AC();
+      }
+      if (audioCtx.state === "suspended") await audioCtx.resume();
+      if (micAnalyser || micStream) return;
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const src = audioCtx.createMediaStreamSource(micStream);
+      micAnalyser = audioCtx.createAnalyser();
+      micAnalyser.fftSize = 512;
+      micAnalyser.smoothingTimeConstant = 0.75;
+      src.connect(micAnalyser);
+      micFreq = new Uint8Array(micAnalyser.frequencyBinCount); // 预分配，避免每帧 GC
+      micTime = new Uint8Array(micAnalyser.fftSize);
+      micAvailable = true;
+    } catch (_) {
+      micAvailable = false; // 拒绝授权 → 回落模拟 RMS
+    }
+  }
+
+  function resumeAudio() {
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  }
+
+  /* 真实 RMS（0..1），无麦克风时合成语音包络 + 底噪 */
+  const noiseFloorPhase = { v: 0 };
+  function getMicLevel(t) {
+    if (micAvailable && micAnalyser) {
+      micAnalyser.getByteTimeDomainData(micTime);
+      let sum = 0;
+      for (let i = 0; i < micTime.length; i++) {
+        const v = (micTime[i] - 128) / 128;
+        sum += v * v;
+      }
+      const rms = Math.sqrt(sum / micTime.length);
+      return Math.min(1, rms * 3.2);
+    }
+    // 模拟：底噪微波 + 说话包络
+    noiseFloorPhase.v = 0.04 + 0.025 * Math.sin(t * 3.1) + 0.015 * Math.sin(t * 7.7);
+    const phrase = Math.max(0, Math.sin(t * 1.35 - 0.6));
+    const syll = 0.55 + 0.45 * Math.sin(t * 6.8);
+    const burst = phrase * syll * (0.55 + 0.45 * Math.sin(t * 2.9 + 1.2));
+    return Math.min(1, noiseFloorPhase.v + Math.max(0, burst) * 0.75);
+  }
+
+  /* 合成 TTS/思考分析数据（写入预分配缓冲） */
+  const ttsLow = new Float32Array(1);
+  const ttsHigh = new Float32Array(1);
+
+  function synthAudio(t) {
+    if (state === State.SPEAKING) {
+      // 音节包络 → 低频能量；高频毛刺
+      const phraseGate = 0.55 + 0.45 * Math.sin(t * 0.9);
+      const syll = Math.pow(Math.abs(Math.sin(t * 5.1)), 0.55);
+      const syll2 = 0.6 + 0.4 * Math.sin(t * 2.3 + 0.8);
+      ttsLow[0] = Math.min(1, phraseGate * syll * syll2 * (0.75 + 0.25 * Math.sin(t * 11.3)));
+      ttsHigh[0] = ttsLow[0] * (0.5 + 0.5 * Math.sin(t * 17.7 + Math.sin(t * 23) * 2));
+    } else if (state === State.THINKING) {
+      ttsLow[0] = 0.35 + 0.2 * Math.sin(t * 6.5);
+      ttsHigh[0] = 0.3 + 0.25 * Math.sin(t * 13.1);
+    } else if (state === State.LISTENING) {
+      const lvl = getMicLevel(t);
+      ttsLow[0] = 0.15 + lvl * 0.45;
+      ttsHigh[0] = lvl * 0.35;
+    } else {
+      ttsLow[0] = 0;
+      ttsHigh[0] = 0;
+    }
+  }
+
+  function realMicSpectrum() {
+    if (!micAvailable || !micAnalyser) return;
+    micAnalyser.getByteFrequencyData(micFreq);
+    // 低频均值（0-100Hz 近似前几 bin）→ 可覆盖合成
+    let low = 0, high = 0, n = 0;
+    const bins = micFreq.length;
+    const lowEnd = Math.max(2, Math.floor(bins * 0.04));
+    for (let i = 1; i < lowEnd; i++) { low += micFreq[i]; n++; }
+    low = n ? low / n / 255 : 0;
+    n = 0;
+    for (let i = Math.floor(bins * 0.35); i < bins; i++) { high += micFreq[i]; n++; }
+    high = n ? high / n / 255 : 0;
+    if (state === State.LISTENING) {
+      ttsLow[0] = Math.max(ttsLow[0], low);
+      ttsHigh[0] = Math.max(ttsHigh[0], high);
+    }
+  }
+
+  /* ================================================================
+   *  Mic 音量环
+   * ================================================================ */
+  const RING_C = 2 * Math.PI * 40;
+  let ringSmooth = 0;
+
+  function updateMicRing(level, t) {
+    // 平滑（Lerp）
+    ringSmooth += (level - ringSmooth) * 0.22;
+    // 无声音时保留微弱底噪波动
+    const shown = state === State.LISTENING || state === State.IDLE
+      ? (state === State.IDLE ? 0.04 + 0.02 * Math.sin(t * 2.4) : Math.max(0.03, ringSmooth))
+      : 0;
+    micLevelEl.style.strokeDashoffset = String(RING_C * (1 - Math.min(1, shown)));
+    // 蓝 → 红
+    const hue = 220 - Math.min(1, shown) * 220;
+    const sat = 85 + shown * 10;
+    const light = 52 + shown * 8;
+    micLevelEl.style.stroke = `hsl(${hue}, ${sat}%, ${light}%)`;
+    micLevelEl.style.filter = `drop-shadow(0 0 ${4 + shown * 10}px hsla(${hue}, 90%, 60%, ${0.35 + shown * 0.45}))`;
+  }
+
+  /* ================================================================
+   *  不规则呼吸球（Canvas 2D）
+   * ================================================================ */
+  const canvas = document.getElementById("orbCanvas");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height;
+  const CX = W / 2, CY = H / 2;
+  const BASE_R = W * 0.30;
+  const N = 16;                       // 顶点数
+  const jitter = new Float32Array(N); // 预分配
+  const jitterTgt = new Float32Array(N);
+  const phase = new Float32Array(N);
+  for (let i = 0; i < N; i++) phase[i] = Math.random() * Math.PI * 2;
+
+  let scaleS = 1;          // 平滑缩放
+  let energyS = 0.25;      // 平滑能量
+  let rot = 0;
+
+  function lerp(a, b, t) { return a + (b - a) * t; }
+
+  // 颜色：青 → 品红
+  const CYAN = [77, 225, 255];
+  const PINK = [255, 96, 168];
+  function mixColor(m) {
+    const r = Math.round(lerp(CYAN[0], PINK[0], m));
+    const g = Math.round(lerp(CYAN[1], PINK[1], m));
+    const b = Math.round(lerp(CYAN[2], PINK[2], m));
+    return [r, g, b];
+  }
+
+  function updateOrb(t, dt) {
+    synthAudio(t);
+    realMicSpectrum();
+    const low = ttsLow[0];
+    const high = ttsHigh[0];
+    const micLvl = getMicLevel(t);
+
+    let scaleT, energyT, jitterAmp, rotSpeed, colorMix;
+
+    switch (state) {
+      case State.IDLE:
+        scaleT = 1 + 0.055 * Math.sin(t * 1.05);
+        energyT = 0.28 + 0.10 * Math.sin(t * 1.05 + 0.5);
+        jitterAmp = 0.018;
+        rotSpeed = 0.05;
+        colorMix = 0.12 + 0.08 * (0.5 + 0.5 * Math.sin(t * 0.5));
+        break;
+      case State.LISTENING:
+        scaleT = 0.97 + micLvl * 0.16;
+        energyT = 0.32 + micLvl * 0.45;
+        jitterAmp = 0.02 + micLvl * 0.05;
+        rotSpeed = 0.12;
+        colorMix = 0.2 + micLvl * 0.35;
+        break;
+      case State.THINKING:
+        scaleT = 0.78 + 0.035 * Math.sin(t * 6.2);
+        energyT = 0.45 + 0.15 * Math.sin(t * 8);
+        jitterAmp = 0.05;
+        rotSpeed = 1.1;   // 快速旋转
+        colorMix = 0.45 + 0.15 * Math.sin(t * 4);
+        break;
+      case State.SPEAKING:
+        scaleT = 0.94 + low * 0.24;
+        energyT = 0.5 + low * 0.5;
+        jitterAmp = 0.03 + high * 0.16;  // 高频 → 毛刺感
+        rotSpeed = 0.35 + low * 0.4;
+        colorMix = 0.55 + low * 0.45;
+        break;
+    }
+
+    const k = 1 - Math.pow(0.001, dt);          // 帧率无关平滑
+    scaleS = lerp(scaleS, scaleT, Math.min(1, k * (state === State.SPEAKING ? 1.6 : 1)));
+    energyS = lerp(energyS, energyT, Math.min(1, k * 1.4));
+    rot += rotSpeed * dt;
+
+    // 顶点目标扰动（Lerp 平滑）
+    for (let i = 0; i < N; i++) {
+      const wob = Math.sin(t * (2.2 + (i % 5) * 0.7) + phase[i])
+                + 0.55 * Math.sin(t * (4.1 + (i % 3) * 1.3) + phase[i] * 1.7);
+      jitterTgt[i] = wob * jitterAmp;
+      jitter[i] = lerp(jitter[i], jitterTgt[i], Math.min(1, k * 1.8));
+    }
+  }
+
+  function drawOrb(t) {
+    ctx.clearRect(0, 0, W, H);
+    const [cr, cg, cb] = mixColor(Math.max(0, Math.min(1, colorMixRef)));
+    const e = energyS;
+    const glow = 14 + e * 46;
+
+    // 外层柔光
+    const halo = ctx.createRadialGradient(CX, CY, BASE_R * 0.2, CX, CY, BASE_R * (1.55 + e * 0.35));
+    halo.addColorStop(0, `rgba(${cr},${cg},${cb},${0.16 + e * 0.14})`);
+    halo.addColorStop(1, `rgba(${cr},${cg},${cb},0)`);
+    ctx.fillStyle = halo;
+    ctx.fillRect(0, 0, W, H);
+
+    // 计算顶点
+    const pts = [];
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2 + rot;
+      const r = BASE_R * scaleS * (1 + jitter[i]);
+      pts.push({ x: CX + Math.cos(a) * r, y: CY + Math.sin(a) * r });
+    }
+
+    // 闭合平滑曲线（中点二次贝塞尔）
+    ctx.save();
+    ctx.shadowColor = `rgba(${cr},${cg},${cb},${0.55 + e * 0.4})`;
+    ctx.shadowBlur = glow;
+
+    const grad = ctx.createRadialGradient(CX - BASE_R * 0.25, CY - BASE_R * 0.3, BASE_R * 0.1, CX, CY, BASE_R * scaleS * 1.25);
+    grad.addColorStop(0, `rgba(${Math.min(255, cr + 50)},${Math.min(255, cg + 30)},255,0.95)`);
+    grad.addColorStop(0.55, `rgba(${cr},${cg},${cb},0.88)`);
+    grad.addColorStop(1, `rgba(${Math.round(cr * 0.35)},${Math.round(cg * 0.3)},${Math.round(cb * 0.6)},0.9)`);
+
+    ctx.beginPath();
+    let mx = (pts[N - 1].x + pts[0].x) / 2;
+    let my = (pts[N - 1].y + pts[0].y) / 2;
+    ctx.moveTo(mx, my);
+    for (let i = 0; i < N; i++) {
+      const p = pts[i];
+      const nx = pts[(i + 1) % N];
+      const midX = (p.x + nx.x) / 2;
+      const midY = (p.y + nx.y) / 2;
+      ctx.quadraticCurveTo(p.x, p.y, midX, midY);
+    }
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // 内芯高光（无 shadow，避免糊）
+    ctx.shadowBlur = 0;
+    const core = ctx.createRadialGradient(CX - BASE_R * 0.2, CY - BASE_R * 0.28, 0, CX, CY, BASE_R * scaleS * 0.7);
+    core.addColorStop(0, `rgba(255,255,255,${0.35 + e * 0.25})`);
+    core.addColorStop(0.45, `rgba(255,255,255,0.05)`);
+    core.addColorStop(1, "rgba(255,255,255,0)");
+    ctx.fillStyle = core;
+    ctx.fill();
+
+    // 第二层：细描边增加“能量壳”
+    ctx.strokeStyle = `rgba(${cr},${cg},${cb},${0.35 + e * 0.4})`;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  let colorMixRef = 0.12;
+  let lastT = performance.now();
+
+  function frame(now) {
+    const t = now / 1000;
+    const dt = Math.min(0.05, (now - lastT) / 1000);
+    lastT = now;
+
+    updateOrb(t, dt);
+    // colorMix 在 updateOrb 内按状态算，存到外部
+    colorMixRef = currentColorMix;
+    drawOrb(t);
+
+    const micLvl = getMicLevel(t);
+    updateMicRing(micLvl, t);
+
+    requestAnimationFrame(frame);
+  }
+
+  // 把 colorMix 从 updateOrb 传出
+  let currentColorMix = 0.12;
+  const _origUpdate = updateOrb;
+  updateOrb = function (t, dt) {
+    const before = currentColorMix;
+    _origUpdate(t, dt);
+    // 重新按状态取 colorMix（_origUpdate 内部局部变量不可达，这里重算）
+    const micLvl = getMicLevel(t);
+    switch (state) {
+      case State.IDLE:
+        currentColorMix = 0.12 + 0.08 * (0.5 + 0.5 * Math.sin(t * 0.5));
+        break;
+      case State.LISTENING:
+        currentColorMix = 0.2 + micLvl * 0.35;
+        break;
+      case State.THINKING:
+        currentColorMix = 0.45 + 0.15 * Math.sin(t * 4);
+        break;
+      case State.SPEAKING:
+        currentColorMix = 0.55 + ttsLow[0] * 0.45;
+        break;
+      default:
+        currentColorMix = before;
+    }
+  };
+
+  /* ================================================================
+   *  启动
+   * ================================================================ */
+  // 首次任意手势后尝试音频（兼容自动播放限制）
+  ["pointerdown", "keydown"].forEach(evt => {
+    window.addEventListener(evt, function once() {
+      ensureAudio();
+      window.removeEventListener(evt, once);
+    }, { once: true });
+  });
+
+  requestAnimationFrame(frame);
+})();
+</script>
+</body>
+</html>
